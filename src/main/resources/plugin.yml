@@ -1,0 +1,6 @@
+name: VisantaraEventHandler
+version: '1.0.0'
+main: me.bintanq.VisantaraEventHandler
+api-version: '1.21'
+authors: [ bintanq ]
+description: Visantara Trade
