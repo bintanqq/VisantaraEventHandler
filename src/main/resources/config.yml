@@ -27,7 +27,7 @@ dummy:
     invincible: true
 
     # Maximum HP of the mob dummy
-    max-hp: 2000.0
+    max-hp: 1024.0
 
   player:
     # Nametag for Player Dummy. Placeholders: <hp>, <maxhp>
@@ -37,7 +37,7 @@ dummy:
     invincible: true
 
     # Maximum HP of the player dummy
-    max-hp: 2000.0
+    max-hp: 1024.0
 
 analytics:
   # Format for damage output in chat.
