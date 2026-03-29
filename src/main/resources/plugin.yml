@@ -1,6 +1,36 @@
 name: VisantaraEventHandler
-version: '1.0.0'
-main: me.bintanq.VisantaraEventHandler
+version: '${project.version}'
+main: me.bintanq.VisantaraEventHandler.VisantaraEventHandler
 api-version: '1.21'
+description: High-performance dummy entity testing plugin for MythicMobs and MMOItems
 authors: [ bintanq ]
-description: Visantara Trade
+website: ''
+
+depend:
+  - MythicMobs
+  - MMOItems
+
+softdepend:
+  - MythicLib
+
+commands:
+  vdummy:
+    description: Manage test dummy entities
+    usage: /vdummy <spawn <mob|player>|remove>
+    permission: visantara.dummy
+    aliases:
+      - dummy
+
+permissions:
+  visantara.dummy:
+    description: Access to all /vdummy commands
+    default: op
+  visantara.dummy.spawn:
+    description: Spawn dummy entities
+    default: op
+  visantara.dummy.remove:
+    description: Remove dummy entities
+    default: op
+  visantara.damage.output:
+    description: Receive damage analytics in chat
+    default: op

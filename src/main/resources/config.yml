@@ -1,0 +1,51 @@
+# VisantaraEventHandler Configuration
+# MiniMessage and legacy (&) color codes are both supported in nametags.
+
+settings:
+  # Radius (in blocks) for /vdummy remove
+  remove-radius: 20
+
+  # Whether to broadcast damage output to all ops or only the attacker
+  broadcast-damage: false
+
+  # Minimum damage to display in analytics (set 0 to show all)
+  min-display-damage: 0.0
+
+dummy:
+  mob:
+    # Nametag for Mob Dummy. Placeholders: <hp>, <maxhp>
+    nametag: "&e[MOB DUMMY] &c❤ <hp>/<maxhp>"
+
+    # MythicMobs mob type to spawn as (must exist in your MythicMobs config)
+    # Leave empty to spawn a vanilla Zombie
+    mythic-mob-type: ""
+
+    # Vanilla entity type if mythic-mob-type is empty
+    vanilla-type: ZOMBIE
+
+    # Whether the mob dummy is invincible (prevents actual death; analytics still fire)
+    invincible: true
+
+    # Maximum HP of the mob dummy
+    max-hp: 2000.0
+
+  player:
+    # Nametag for Player Dummy. Placeholders: <hp>, <maxhp>
+    nametag: "&b[PLAYER DUMMY] &c❤ <hp>/<maxhp>"
+
+    # Whether the player dummy is invincible
+    invincible: true
+
+    # Maximum HP of the player dummy
+    max-hp: 2000.0
+
+analytics:
+  # Format for damage output in chat.
+  # Placeholders: {type}, {damage}, {effects}, {skill}, {entity}
+  format: "&8[&6VEH&8] &7{entity} &8| &c{damage} DMG &8| &eType: {type} &8| &dSkill: {skill} &8| &aEffects: {effects}"
+
+  # How many decimal places to show for damage values
+  decimal-places: 2
+
+  # Show '0' effects as 'None' or hide the effects section
+  show-no-effects: true
