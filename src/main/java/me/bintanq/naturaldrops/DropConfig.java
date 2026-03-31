@@ -11,9 +11,39 @@ import java.util.*;
 
 public class DropConfig {
 
-    public record DropEntry(String mmoType, String mmoId, double chance, int amountMin, int amountMax, Set<Biome> biomes) {
+    public record DropEntry(
+            String mmoType,
+            String mmoId,
+            double chance,
+            int amountMin,
+            int amountMax,
+            Set<Biome> biomes,
+            Set<String> weather,
+            Set<String> time
+    ) {
         public boolean appliesToBiome(Biome biome) {
             return biomes.isEmpty() || biomes.contains(biome);
+        }
+
+        public boolean appliesToWeather(boolean isRaining, boolean isThundering) {
+            if (weather.isEmpty()) return true;
+
+            if (isThundering && weather.contains("THUNDER")) return true;
+            if (isRaining && weather.contains("RAIN")) return true;
+            if (!isRaining && !isThundering && weather.contains("CLEAR")) return true;
+
+            return false;
+        }
+
+        public boolean appliesToTime(long worldTime) {
+            if (time.isEmpty()) return true;
+
+            boolean isDay = worldTime >= 0 && worldTime < 12000;
+
+            if (isDay && time.contains("DAY")) return true;
+            if (!isDay && time.contains("NIGHT")) return true;
+
+            return false;
         }
     }
 
@@ -51,6 +81,7 @@ public class DropConfig {
 
                     if (amountMin > amountMax) amountMin = amountMax;
 
+                    // Parse biomes
                     Set<Biome> biomes = new HashSet<>();
                     Object biomeObj = raw.get("biomes");
                     if (biomeObj instanceof List<?> biomeList) {
@@ -65,7 +96,35 @@ public class DropConfig {
                         }
                     }
 
-                    entries.add(new DropEntry(type, id, chance, amountMin, amountMax, biomes));
+                    // Parse weather conditions (optional)
+                    Set<String> weather = new HashSet<>();
+                    Object weatherObj = raw.get("weather");
+                    if (weatherObj instanceof List<?> weatherList) {
+                        for (Object w : weatherList) {
+                            String wStr = w.toString().toUpperCase();
+                            if (wStr.equals("CLEAR") || wStr.equals("RAIN") || wStr.equals("THUNDER")) {
+                                weather.add(wStr);
+                            } else {
+                                plugin.getLogger().warning("natural-drops: invalid weather '" + w + "' for block " + blockKey + ", skipping. Use: CLEAR, RAIN, THUNDER");
+                            }
+                        }
+                    }
+
+                    // Parse time conditions (optional)
+                    Set<String> time = new HashSet<>();
+                    Object timeObj = raw.get("time");
+                    if (timeObj instanceof List<?> timeList) {
+                        for (Object t : timeList) {
+                            String tStr = t.toString().toUpperCase();
+                            if (tStr.equals("DAY") || tStr.equals("NIGHT")) {
+                                time.add(tStr);
+                            } else {
+                                plugin.getLogger().warning("natural-drops: invalid time '" + t + "' for block " + blockKey + ", skipping. Use: DAY, NIGHT");
+                            }
+                        }
+                    }
+
+                    entries.add(new DropEntry(type, id, chance, amountMin, amountMax, biomes, weather, time));
                 } catch (Exception e) {
                     plugin.getLogger().warning("natural-drops: malformed drop entry for block " + blockKey + ": " + e.getMessage());
                 }

@@ -5,6 +5,7 @@ import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
 import org.bukkit.block.Biome;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -40,6 +41,7 @@ public class BlockListener implements Listener {
         Block block = event.getBlock();
         Location loc = block.getLocation();
         Player player = event.getPlayer();
+        World world = block.getWorld();
 
         boolean wasPlayerPlaced = dropManager.isPlayerPlaced(loc);
 
@@ -52,10 +54,19 @@ public class BlockListener implements Listener {
         if (!dropConfig.hasDrop(block.getType())) return;
 
         Biome biome = block.getBiome();
+        long worldTime = world.getTime();
+        boolean isRaining = world.hasStorm();
+        boolean isThundering = world.isThundering();
+
         List<DropConfig.DropEntry> drops = dropConfig.getDrops(block.getType());
 
         for (DropConfig.DropEntry entry : drops) {
             if (!entry.appliesToBiome(biome)) continue;
+
+            if (!entry.appliesToWeather(isRaining, isThundering)) continue;
+
+            if (!entry.appliesToTime(worldTime)) continue;
+
             if (random.nextDouble() > entry.chance()) continue;
 
             int amount = entry.amountMin() == entry.amountMax()
