@@ -2,7 +2,7 @@ name: VisantaraEventHandler
 version: '${project.version}'
 main: me.bintanq.VisantaraEventHandler
 api-version: '1.21'
-description: High-performance dummy entity testing plugin for MythicMobs and MMOItems
+description: Visantara All Event Handler Related
 authors: [ bintanq ]
 website: ''
 
