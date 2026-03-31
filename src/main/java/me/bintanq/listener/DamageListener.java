@@ -26,16 +26,12 @@ public class DamageListener implements Listener {
 
     private final VisantaraEventHandler plugin;
 
-    // Track total damage dealt ke dummy sejak spawn (buat display HP yang berkurang)
     private final Map<UUID, Double> damageAccumulated = new ConcurrentHashMap<>();
 
     public DamageListener(VisantaraEventHandler plugin) {
         this.plugin = plugin;
     }
 
-    // -----------------------------------------------------------------------
-    // Core damage handler
-    // -----------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
@@ -53,12 +49,10 @@ public class DamageListener implements Listener {
         double minDamage = plugin.getConfig().getDouble("settings.min-display-damage", 0.0);
         if (finalDamage < minDamage) return;
 
-        // Akumulasi damage untuk simulasi HP berkurang di nametag
         UUID victimUuid = victim.getUniqueId();
         double accumulated = damageAccumulated.merge(victimUuid, finalDamage, Double::sum);
         double simulatedHp = Math.max(0, dummy.getMaxHp() - accumulated);
 
-        // Restore HP di tick berikutnya (invincible)
         boolean invincible = plugin.getConfig().getBoolean(
                 dummy.getType() == DummyType.PLAYER ? "dummy.player.invincible" : "dummy.mob.invincible", true);
         if (invincible) {
@@ -67,7 +61,6 @@ public class DamageListener implements Listener {
             }, 1L);
         }
 
-        // Reset accumulated jika HP simulasi habis
         if (simulatedHp <= 0) {
             damageAccumulated.put(victimUuid, 0.0);
             simulatedHp = dummy.getMaxHp();
@@ -89,10 +82,8 @@ public class DamageListener implements Listener {
         final String entityLabel = dummy.getType() == DummyType.PLAYER ? "Player Dummy" : "Mob Dummy";
         final double dmg = finalDamage;
 
-        // Update nametag langsung dengan HP simulasi (no delay)
         updateNametagWithHp(victim, dummy, finalSimulatedHp);
 
-        // Delay HANYA untuk efek — potion effect butuh beberapa tick untuk apply
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             String effects = buildEffects(victim);
 
@@ -108,12 +99,8 @@ public class DamageListener implements Listener {
                     .replace("{effects}", effects);
 
             broadcastAnalytics(message, finalAttacker);
-        }, 5L); // 5 tick cukup untuk MM/MMOItems apply potion
+        }, 5L);
     }
-
-    // -----------------------------------------------------------------------
-    // Prevent dummy death — respawn di tempat yang sama
-    // -----------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityDeath(EntityDeathEvent event) {
@@ -131,7 +118,6 @@ public class DamageListener implements Listener {
         var loc = event.getEntity().getLocation().clone();
         var type = dummy.getType();
 
-        // Reset accumulated damage saat respawn
         damageAccumulated.remove(uuid);
         manager.unregisterDummy(uuid);
 
@@ -141,10 +127,6 @@ public class DamageListener implements Listener {
         }, 2L);
     }
 
-    // -----------------------------------------------------------------------
-    // Utilities
-    // -----------------------------------------------------------------------
-
     private void restoreHp(LivingEntity entity) {
         try {
             var attr = entity.getAttribute(Attribute.MAX_HEALTH);
@@ -153,9 +135,6 @@ public class DamageListener implements Listener {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Update nametag dengan HP simulasi (bukan HP entity yang selalu full).
-     */
     private void updateNametagWithHp(LivingEntity entity, DummyEntity dummy, double simulatedHp) {
         String template = dummy.getNametag();
         String hp = String.format("%.1f", simulatedHp);
@@ -185,19 +164,9 @@ public class DamageListener implements Listener {
         return null;
     }
 
-    /**
-     * Resolusi nama skill dengan prioritas:
-     * 1. Player yang pakai skill MMOItems → cek apakah item di tangan adalah MMOItem
-     * 2. MythicMob attacker → tampilkan nama mob-nya
-     * 3. Projectile dari player/mob
-     * 4. Melee biasa
-     *
-     * TIDAK fallback ke nama item supaya output bersih.
-     */
     private String resolveSkillName(EntityDamageByEntityEvent event) {
         var damager = event.getDamager();
 
-        // Cek metadata skill yang di-inject MythicMobs/MythicLib
         for (String key : List.of("MythicMobsSkill", "MythicSkill", "mmskill", "SkillCaster", "origin")) {
             if (damager.hasMetadata(key)) {
                 try {
@@ -207,7 +176,6 @@ public class DamageListener implements Listener {
             }
         }
 
-        // Projectile — cek shooter
         if (damager instanceof Projectile proj) {
             ProjectileSource src = proj.getShooter();
             if (src instanceof LivingEntity shooter) {
@@ -219,7 +187,6 @@ public class DamageListener implements Listener {
                         } catch (Exception ignored) {}
                     }
                 }
-                // MythicMob shooter
                 try {
                     var mob = MythicBukkit.inst().getMobManager().getActiveMob(shooter.getUniqueId());
                     if (mob.isPresent()) return "MythicMob:" + mob.get().getType().getInternalName();
@@ -228,7 +195,6 @@ public class DamageListener implements Listener {
             }
         }
 
-        // MythicMob melee
         try {
             if (damager instanceof LivingEntity le) {
                 var mob = MythicBukkit.inst().getMobManager().getActiveMob(le.getUniqueId());
@@ -236,7 +202,6 @@ public class DamageListener implements Listener {
             }
         } catch (Exception ignored) {}
 
-        // Player — kembalikan "Melee" saja, bukan nama item
         if (damager instanceof Player) {
             return "Melee";
         }
@@ -244,10 +209,6 @@ public class DamageListener implements Listener {
         return "N/A";
     }
 
-    /**
-     * Baca potion effects yang aktif di entity.
-     * Dipanggil setelah delay 5 tick supaya MM/MMOItems sudah apply effect-nya.
-     */
     private String buildEffects(LivingEntity entity) {
         Collection<PotionEffect> effects = entity.getActivePotionEffects();
         if (effects.isEmpty()) {

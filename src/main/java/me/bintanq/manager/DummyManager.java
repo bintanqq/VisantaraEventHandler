@@ -31,10 +31,6 @@ public class DummyManager {
         this.plugin = plugin;
     }
 
-    // -----------------------------------------------------------------------
-    // Spawn
-    // -----------------------------------------------------------------------
-
     public DummyEntity spawnMobDummy(Location location) {
         double maxHp = plugin.getConfig().getDouble("dummy.mob.max-hp", 2000.0);
         String mythicType = plugin.getConfig().getString("dummy.mob.mythic-mob-type", "");
@@ -79,7 +75,6 @@ public class DummyManager {
         DummyEntity dummy = new DummyEntity(entity.getUniqueId(), DummyType.MOB, maxHp, nametag);
         dummies.put(entity.getUniqueId(), dummy);
 
-        // Tampilkan HP awal = maxHp
         updateNametagWithHp(entity, dummy, maxHp);
         return dummy;
     }
@@ -111,10 +106,6 @@ public class DummyManager {
         updateNametagWithHp(zombie, dummy, maxHp);
         return dummy;
     }
-
-    // -----------------------------------------------------------------------
-    // Helpers
-    // -----------------------------------------------------------------------
 
     private LivingEntity spawnVanillaMob(Location location, double maxHp) {
         String typeStr = plugin.getConfig().getString("dummy.mob.vanilla-type", "ZOMBIE");
@@ -165,10 +156,6 @@ public class DummyManager {
         entity.setHealth(Math.min(max, NMS_MAX_HEALTH_CAP));
     }
 
-    /**
-     * Update nametag dengan HP simulasi yang diberikan dari DamageListener.
-     * DummyManager TIDAK baca entity.getHealth() karena selalu full (invincible restore).
-     */
     public void updateNametagWithHp(LivingEntity entity, DummyEntity dummy, double simulatedHp) {
         String template = dummy.getNametag();
         String hp = String.format("%.1f", Math.max(0, simulatedHp));
@@ -189,16 +176,9 @@ public class DummyManager {
         entity.setCustomNameVisible(true);
     }
 
-    /**
-     * Legacy method — dipanggil dari tempat lain jika perlu reset nametag ke maxHp.
-     */
     public void updateNametag(LivingEntity entity, DummyEntity dummy) {
         updateNametagWithHp(entity, dummy, dummy.getMaxHp());
     }
-
-    // -----------------------------------------------------------------------
-    // Removal
-    // -----------------------------------------------------------------------
 
     public int removeAllDummies() {
         int count = 0;
@@ -234,10 +214,6 @@ public class DummyManager {
     public void unregisterDummy(UUID uuid) {
         dummies.remove(uuid);
     }
-
-    // -----------------------------------------------------------------------
-    // Queries
-    // -----------------------------------------------------------------------
 
     public boolean isDummy(UUID uuid) {
         return dummies.containsKey(uuid);

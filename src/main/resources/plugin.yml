@@ -14,22 +14,29 @@ softdepend:
   - MythicLib
 
 commands:
-  vdummy:
-    description: Manage test dummy entities
-    usage: /vdummy <spawn <mob|player>|remove>
-    permission: visantara.dummy
+  vhandler:
+    description: Main command for VisantaraEventHandler
+    usage: /vhandler <dummy|drop|reload>
+    permission: visantara.use
     aliases:
-      - dummy
+      - vdummy
+      - vh
 
 permissions:
-  visantara.dummy:
-    description: Access to all /vdummy commands
+  visantara.use:
+    description: Access to /vhandler command
     default: op
   visantara.dummy.spawn:
     description: Spawn dummy entities
     default: op
   visantara.dummy.remove:
     description: Remove dummy entities
+    default: op
+  visantara.drop.check:
+    description: Check block natural/player-placed status
+    default: op
+  visantara.drop.mark:
+    description: Manually mark blocks as player-placed or natural
     default: op
   visantara.damage.output:
     description: Receive damage analytics in chat

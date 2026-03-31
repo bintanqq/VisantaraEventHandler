@@ -2,56 +2,184 @@
 # MiniMessage and legacy (&) color codes are both supported in nametags.
 
 settings:
-  # Radius (in blocks) for /vdummy remove
   remove-radius: 20
-
-  # Whether to broadcast damage output to all ops or only the attacker
   broadcast-damage: false
-
-  # Minimum damage to display in analytics (set 0 to show all)
   min-display-damage: 0.0
 
 dummy:
   mob:
-    # Nametag for Mob Dummy. Placeholders: <hp>, <maxhp>
     nametag: "&e[MOB DUMMY] &c❤ <hp>/<maxhp>"
-
-    # MythicMobs mob type to spawn as (must exist in your MythicMobs config)
-    # Leave empty to spawn a vanilla Zombie
     mythic-mob-type: ""
-
-    # Vanilla entity type if mythic-mob-type is empty
     vanilla-type: ZOMBIE
-
-    # Whether the mob dummy is invincible (prevents actual death; analytics still fire)
     invincible: true
-
-    # Maximum HP of the mob dummy
     max-hp: 1024.0
-
     disable-sounds: true
 
   player:
-    # Nametag for Player Dummy. Placeholders: <hp>, <maxhp>
     nametag: "&b[PLAYER DUMMY] &c❤ <hp>/<maxhp>"
-
-    # Whether the player dummy is invincible
     invincible: true
-
-    # Maximum HP of the player dummy
     max-hp: 1024.0
-
     disable-sounds: true
-
     skin-uuid: "8667ba71b85a4004af54457a9734eed7"
 
 analytics:
-  # Format for damage output in chat.
-  # Placeholders: {type}, {damage}, {effects}, {skill}, {entity}
   format: "&8[&6VEH&8] &7{entity} &8| &c{damage} DMG &8| &eType: {type} &8| &dSkill: {skill} &8| &aEffects: {effects}"
-
-  # How many decimal places to show for damage values
   decimal-places: 2
-
-  # Show '0' effects as 'None' or hide the effects section
   show-no-effects: true
+
+# ─────────────────────────────────────────
+#  Natural Block Drops
+# ─────────────────────────────────────────
+# Drops hanya terjadi pada block yang TIDAK diletakkan oleh pemain.
+# Block tanpa data (legacy/sebelum plugin dipasang) dianggap NATURAL.
+#
+# Format amount: min-max (e.g. 1-3)
+# Biomes: gunakan nama Bukkit Biome (https://jd.papermc.io/paper/1.21/)
+#         kosongkan list untuk semua biome
+#
+# Contoh item type MMOItems: MATERIAL, GEM, CONSUMABLE, dll
+# Contoh item id: lihat konfigurasi MMOItems kamu
+# ─────────────────────────────────────────
+natural-drops:
+  enabled: true
+
+  blocks:
+    OAK_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    SPRUCE_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    BIRCH_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    JUNGLE_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    ACACIA_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    DARK_OAK_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    MANGROVE_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    CHERRY_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    AZALEA_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    FLOWERING_AZALEA_LEAVES:
+      drops:
+        - type: MATERIAL
+          id: LEAF_STINGER
+          chance: 0.08
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    OBSIDIAN:
+      drops:
+        - type: MATERIAL
+          id: OBSIDIAN_PIECES
+          chance: 0.12
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    WHEAT:
+      drops:
+        - type: MATERIAL
+          id: ELECTRIC_REED
+          chance: 0.10
+          amount-min: 1
+          amount-max: 1
+          biomes: []
+
+    TALL_GRASS:
+      drops:
+        - type: MATERIAL
+          id: SNOWY_SEED
+          chance: 0.15
+          amount-min: 1
+          amount-max: 1
+          biomes:
+            - SNOWY_PLAINS
+
+    SHORT_GRASS:
+      drops:
+        - type: MATERIAL
+          id: SNOWY_SEED
+          chance: 0.15
+          amount-min: 1
+          amount-max: 1
+          biomes:
+            - SNOWY_PLAINS
+            -
+    DIRT:
+      drops:
+        - type: MATERIAL
+          id: WET_SOIL
+          chance: 0.20
+          amount-min: 1
+          amount-max: 1
+          biomes:
+            - OCEAN
+            - DEEP_OCEAN
+            - WARM_OCEAN
