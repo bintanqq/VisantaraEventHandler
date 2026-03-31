@@ -29,6 +29,8 @@ dummy:
     # Maximum HP of the mob dummy
     max-hp: 1024.0
 
+    disable-sounds: true
+
   player:
     # Nametag for Player Dummy. Placeholders: <hp>, <maxhp>
     nametag: "&b[PLAYER DUMMY] &c❤ <hp>/<maxhp>"
@@ -38,6 +40,10 @@ dummy:
 
     # Maximum HP of the player dummy
     max-hp: 1024.0
+
+    disable-sounds: true
+
+    skin-uuid: "8667ba71b85a4004af54457a9734eed7"
 
 analytics:
   # Format for damage output in chat.

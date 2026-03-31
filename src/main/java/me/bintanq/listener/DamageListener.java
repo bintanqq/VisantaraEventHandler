@@ -1,12 +1,12 @@
 package me.bintanq.listener;
 
 import io.lumine.mythic.bukkit.MythicBukkit;
-import io.lumine.mythic.bukkit.events.MythicMobCastSkillEvent;
 import me.bintanq.VisantaraEventHandler;
 import me.bintanq.dummy.DummyEntity;
 import me.bintanq.dummy.DummyType;
 import me.bintanq.manager.DummyManager;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -16,7 +16,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntityPotionEffectEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -27,87 +26,15 @@ public class DamageListener implements Listener {
 
     private final VisantaraEventHandler plugin;
 
-    /**
-     * Cache skill name per-caster UUID.
-     * MythicMobCastSkillEvent terjadi sebelum/bersamaan attack,
-     * sehingga kita bisa ambil nama skill dari sini.
-     * Key: caster UUID, Value: nama skill terakhir yang di-cast
-     */
-    private final Map<UUID, String> recentSkillByCaster = new ConcurrentHashMap<>();
-
-    /**
-     * Cache potion effects yang baru ditambahkan ke dummy.
-     * Key: dummy UUID, Value: list nama efek yang pending ditampilkan
-     */
-    private final Map<UUID, List<String>> pendingEffects = new ConcurrentHashMap<>();
+    // Track total damage dealt ke dummy sejak spawn (buat display HP yang berkurang)
+    private final Map<UUID, Double> damageAccumulated = new ConcurrentHashMap<>();
 
     public DamageListener(VisantaraEventHandler plugin) {
         this.plugin = plugin;
     }
 
     // -----------------------------------------------------------------------
-    // MythicMobs Skill Cast — intercept SEBELUM damage terjadi
-    // -----------------------------------------------------------------------
-
-    /**
-     * MythicMobCastSkillEvent difire saat skill mulai di-cast oleh entity manapun
-     * (termasuk player via MythicLib trigger). Kita cache nama skill-nya per caster.
-     */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onMythicSkillCast(MythicMobCastSkillEvent event) {
-        UUID casterUuid = null;
-        try {
-            // Caster bisa berupa ActiveMob atau entity biasa via MythicLib
-            var caster = event.getCaster();
-            if (caster != null && caster.getEntity() != null) {
-                casterUuid = caster.getEntity().getBukkitEntity().getUniqueId();
-            }
-        } catch (Exception ignored) {}
-
-        if (casterUuid == null) return;
-
-        String skillName = "N/A";
-        try {
-            skillName = event.getSkill() != null ? event.getSkill().getInternalName() : "N/A";
-        } catch (Exception ignored) {}
-
-        recentSkillByCaster.put(casterUuid, skillName);
-
-        // Hapus cache setelah 10 tick supaya tidak stale
-        final UUID finalUuid = casterUuid;
-        plugin.getServer().getScheduler().runTaskLater(plugin,
-                () -> recentSkillByCaster.remove(finalUuid), 10L);
-    }
-
-    // -----------------------------------------------------------------------
-    // Potion Effect Added ke dummy — terjadi SETELAH damage event
-    // -----------------------------------------------------------------------
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPotionEffectAdded(EntityPotionEffectEvent event) {
-        if (event.getAction() != EntityPotionEffectEvent.Action.ADDED
-                && event.getAction() != EntityPotionEffectEvent.Action.CHANGED) return;
-        if (!(event.getEntity() instanceof LivingEntity victim)) return;
-
-        DummyManager manager = plugin.getDummyManager();
-        if (!manager.isDummy(victim.getUniqueId())) return;
-
-        PotionEffect newEffect = event.getNewEffect();
-        if (newEffect == null) return;
-
-        String effectName = formatEffectName(newEffect.getType().getName())
-                + " " + (newEffect.getAmplifier() + 1);
-
-        pendingEffects.computeIfAbsent(victim.getUniqueId(), k -> new ArrayList<>()).add(effectName);
-
-        // Bersihkan pending setelah 5 tick
-        final UUID dummyUuid = victim.getUniqueId();
-        plugin.getServer().getScheduler().runTaskLater(plugin,
-                () -> pendingEffects.remove(dummyUuid), 5L);
-    }
-
-    // -----------------------------------------------------------------------
-    // Core damage interception
+    // Core damage handler
     // -----------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -126,89 +53,91 @@ public class DamageListener implements Listener {
         double minDamage = plugin.getConfig().getDouble("settings.min-display-damage", 0.0);
         if (finalDamage < minDamage) return;
 
-        // Damage cause
-        String damageType = event.getCause().name().replace("_", " ");
+        // Akumulasi damage untuk simulasi HP berkurang di nametag
+        UUID victimUuid = victim.getUniqueId();
+        double accumulated = damageAccumulated.merge(victimUuid, finalDamage, Double::sum);
+        double simulatedHp = Math.max(0, dummy.getMaxHp() - accumulated);
 
-        // Resolve attacker & skill dari cache
-        String skillName = "N/A";
-        Player attacker = null;
-        if (event instanceof EntityDamageByEntityEvent byEntity) {
-            attacker = resolveAttackingPlayer(byEntity);
-            skillName = resolveSkillName(byEntity);
-        }
-
-        // Invincibility restore
+        // Restore HP di tick berikutnya (invincible)
         boolean invincible = plugin.getConfig().getBoolean(
                 dummy.getType() == DummyType.PLAYER ? "dummy.player.invincible" : "dummy.mob.invincible", true);
-
-        final Player finalAttacker = attacker;
-        final String finalSkillName = skillName;
-        final String finalDamageType = damageType;
-        final String entityLabel = (dummy.getType() == DummyType.PLAYER) ? "Player Dummy" : "Mob Dummy";
-        final UUID victimUuid = victim.getUniqueId();
-        final double dmg = finalDamage;
-
         if (invincible) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                if (victim.isValid()) {
-                    AttributeMaxHpRestore(victim, manager);
-                }
+                if (victim.isValid()) restoreHp(victim);
             }, 1L);
         }
 
-        // Delay report 3 tick: supaya MythicMobs sempat apply potion effect ke entity
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            // Effects: gabungkan efek aktif + efek pending yang baru ditambahkan
-            String effects = buildCombinedEffects(victim, victimUuid);
+        // Reset accumulated jika HP simulasi habis
+        if (simulatedHp <= 0) {
+            damageAccumulated.put(victimUuid, 0.0);
+            simulatedHp = dummy.getMaxHp();
+        }
 
+        String damageType = event.getCause().name().replace("_", " ");
+        String skillName = "N/A";
+        Player attacker = null;
+
+        if (event instanceof EntityDamageByEntityEvent byEntity) {
+            attacker = resolveAttacker(byEntity);
+            skillName = resolveSkillName(byEntity);
+        }
+
+        final double finalSimulatedHp = simulatedHp;
+        final String finalSkill = skillName;
+        final String finalType = damageType;
+        final Player finalAttacker = attacker;
+        final String entityLabel = dummy.getType() == DummyType.PLAYER ? "Player Dummy" : "Mob Dummy";
+        final double dmg = finalDamage;
+
+        // Update nametag langsung dengan HP simulasi (no delay)
+        updateNametagWithHp(victim, dummy, finalSimulatedHp);
+
+        // Delay HANYA untuk efek — potion effect butuh beberapa tick untuk apply
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            String effects = buildEffects(victim);
+
+            int decimals = plugin.getConfig().getInt("analytics.decimal-places", 2);
             String format = plugin.getConfig().getString("analytics.format",
                     "&8[&6VEH&8] &7{entity} &8| &c{damage} DMG &8| &eType: {type} &8| &dSkill: {skill} &8| &aEffects: {effects}");
-            int decimals = plugin.getConfig().getInt("analytics.decimal-places", 2);
-            String dmgStr = String.format("%." + decimals + "f", dmg);
 
             String message = format
                     .replace("{entity}", entityLabel)
-                    .replace("{damage}", dmgStr)
-                    .replace("{type}", finalDamageType)
-                    .replace("{skill}", finalSkillName)
+                    .replace("{damage}", String.format("%." + decimals + "f", dmg))
+                    .replace("{type}", finalType)
+                    .replace("{skill}", finalSkill)
                     .replace("{effects}", effects);
 
-            // Update nametag setelah delay juga
-            if (victim.isValid()) {
-                manager.getDummy(victimUuid).ifPresent(d -> manager.updateNametag(victim, d));
-            }
-
             broadcastAnalytics(message, finalAttacker);
-        }, 3L);
+        }, 5L); // 5 tick cukup untuk MM/MMOItems apply potion
     }
 
     // -----------------------------------------------------------------------
-    // Prevent dummy death
+    // Prevent dummy death — respawn di tempat yang sama
     // -----------------------------------------------------------------------
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityDeath(EntityDeathEvent event) {
         DummyManager manager = plugin.getDummyManager();
-        if (!manager.isDummy(event.getEntity().getUniqueId())) return;
+        UUID uuid = event.getEntity().getUniqueId();
+        if (!manager.isDummy(uuid)) return;
 
         event.getDrops().clear();
         event.setDroppedExp(0);
 
-        Optional<DummyEntity> dummyOpt = manager.getDummy(event.getEntity().getUniqueId());
+        Optional<DummyEntity> dummyOpt = manager.getDummy(uuid);
         if (dummyOpt.isEmpty()) return;
 
         DummyEntity dummy = dummyOpt.get();
         var loc = event.getEntity().getLocation().clone();
         var type = dummy.getType();
 
-        manager.unregisterDummy(event.getEntity().getUniqueId());
+        // Reset accumulated damage saat respawn
+        damageAccumulated.remove(uuid);
+        manager.unregisterDummy(uuid);
 
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (type == DummyType.MOB) {
-                manager.spawnMobDummy(loc);
-            } else {
-                manager.spawnPlayerDummy(loc);
-            }
+            if (type == DummyType.MOB) manager.spawnMobDummy(loc);
+            else manager.spawnPlayerDummy(loc);
         }, 2L);
     }
 
@@ -216,83 +145,99 @@ public class DamageListener implements Listener {
     // Utilities
     // -----------------------------------------------------------------------
 
-    private void AttributeMaxHpRestore(LivingEntity victim, DummyManager manager) {
+    private void restoreHp(LivingEntity entity) {
         try {
-            var attr = victim.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-            double max = (attr != null) ? attr.getValue() : 20.0;
-            victim.setHealth(Math.min(max, 1024.0));
+            var attr = entity.getAttribute(Attribute.MAX_HEALTH);
+            double max = attr != null ? attr.getValue() : 20.0;
+            entity.setHealth(Math.min(max, 1024.0));
         } catch (Exception ignored) {}
-        manager.getDummy(victim.getUniqueId()).ifPresent(d -> manager.updateNametag(victim, d));
     }
 
     /**
-     * Resolve player yang menyerang. Bisa langsung atau lewat projectile.
+     * Update nametag dengan HP simulasi (bukan HP entity yang selalu full).
      */
-    private Player resolveAttackingPlayer(EntityDamageByEntityEvent event) {
+    private void updateNametagWithHp(LivingEntity entity, DummyEntity dummy, double simulatedHp) {
+        String template = dummy.getNametag();
+        String hp = String.format("%.1f", simulatedHp);
+        String maxHp = String.format("%.1f", dummy.getMaxHp());
+
+        String processed = template
+                .replace("<hp>", hp)
+                .replace("<maxhp>", maxHp);
+
+        net.kyori.adventure.text.Component component;
+        if (processed.contains("&")) {
+            component = LegacyComponentSerializer.legacyAmpersand().deserialize(processed);
+        } else {
+            component = net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize(processed);
+        }
+        entity.customName(component);
+        entity.setCustomNameVisible(true);
+    }
+
+    private Player resolveAttacker(EntityDamageByEntityEvent event) {
         var damager = event.getDamager();
         if (damager instanceof Player p) return p;
         if (damager instanceof Projectile proj) {
-            ProjectileSource shooter = proj.getShooter();
-            if (shooter instanceof Player p) return p;
+            ProjectileSource src = proj.getShooter();
+            if (src instanceof Player p) return p;
         }
         return null;
     }
 
     /**
-     * Resolve nama skill dengan prioritas:
-     * 1. Cache dari MythicMobCastSkillEvent (paling akurat untuk skill MythicMobs/MythicLib)
-     * 2. Metadata MythicMobs di entity damager
-     * 3. Fallback: nama MythicMob atau item yang dipakai
+     * Resolusi nama skill dengan prioritas:
+     * 1. Player yang pakai skill MMOItems → cek apakah item di tangan adalah MMOItem
+     * 2. MythicMob attacker → tampilkan nama mob-nya
+     * 3. Projectile dari player/mob
+     * 4. Melee biasa
+     *
+     * TIDAK fallback ke nama item supaya output bersih.
      */
     private String resolveSkillName(EntityDamageByEntityEvent event) {
         var damager = event.getDamager();
 
-        // 1. Cek cache skill dari MythicMobCastSkillEvent
-        String cached = recentSkillByCaster.get(damager.getUniqueId());
-        if (cached != null && !cached.equals("N/A")) return cached;
-
-        // Cek juga jika damager adalah projectile — ambil caster UUID-nya
-        if (damager instanceof Projectile proj) {
-            ProjectileSource shooter = proj.getShooter();
-            if (shooter instanceof LivingEntity le) {
-                String cachedFromShooter = recentSkillByCaster.get(le.getUniqueId());
-                if (cachedFromShooter != null) return cachedFromShooter;
-            }
-        }
-
-        // 2. Metadata MythicMobs yang di-set saat skill cast
-        for (String metaKey : List.of("MythicMobsSkill", "MythicSkillSource", "MythicSkill", "mmskill")) {
-            if (damager.hasMetadata(metaKey)) {
+        // Cek metadata skill yang di-inject MythicMobs/MythicLib
+        for (String key : List.of("MythicMobsSkill", "MythicSkill", "mmskill", "SkillCaster", "origin")) {
+            if (damager.hasMetadata(key)) {
                 try {
-                    String val = damager.getMetadata(metaKey).get(0).asString();
+                    String val = damager.getMetadata(key).get(0).asString();
                     if (val != null && !val.isEmpty()) return val;
                 } catch (Exception ignored) {}
             }
         }
 
-        // 3. Cek apakah damager sendiri adalah MythicMob
+        // Projectile — cek shooter
+        if (damager instanceof Projectile proj) {
+            ProjectileSource src = proj.getShooter();
+            if (src instanceof LivingEntity shooter) {
+                for (String key : List.of("MythicMobsSkill", "MythicSkill", "mmskill")) {
+                    if (shooter.hasMetadata(key)) {
+                        try {
+                            String val = shooter.getMetadata(key).get(0).asString();
+                            if (val != null && !val.isEmpty()) return val;
+                        } catch (Exception ignored) {}
+                    }
+                }
+                // MythicMob shooter
+                try {
+                    var mob = MythicBukkit.inst().getMobManager().getActiveMob(shooter.getUniqueId());
+                    if (mob.isPresent()) return "MythicMob:" + mob.get().getType().getInternalName();
+                } catch (Exception ignored) {}
+                if (src instanceof Player) return "Projectile";
+            }
+        }
+
+        // MythicMob melee
         try {
             if (damager instanceof LivingEntity le) {
-                var activeMob = MythicBukkit.inst().getMobManager().getActiveMob(le.getUniqueId());
-                if (activeMob.isPresent()) {
-                    return "MythicMob:" + activeMob.get().getType().getInternalName();
-                }
+                var mob = MythicBukkit.inst().getMobManager().getActiveMob(le.getUniqueId());
+                if (mob.isPresent()) return "MythicMob:" + mob.get().getType().getInternalName();
             }
         } catch (Exception ignored) {}
 
-        // 4. Player pakai item — coba baca display name item yang dipegang
-        if (damager instanceof Player p) {
-            var item = p.getInventory().getItemInMainHand();
-            if (!item.getType().isAir() && item.hasItemMeta()) {
-                var meta = item.getItemMeta();
-                if (meta != null && meta.hasDisplayName()) {
-                    // Strip formatting untuk nama bersih
-                    String displayName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-                            .plainText().serialize(meta.displayName());
-                    return "Item:" + displayName;
-                }
-                return "Item:" + item.getType().name();
-            }
+        // Player — kembalikan "Melee" saja, bukan nama item
+        if (damager instanceof Player) {
             return "Melee";
         }
 
@@ -300,59 +245,40 @@ public class DamageListener implements Listener {
     }
 
     /**
-     * Gabungkan efek aktif di entity + efek pending yang baru saja ditambahkan.
-     * Ini penting karena potion dari MythicMobs skill ditambahkan SETELAH damage event,
-     * jadi kita baca keduanya setelah delay 3 tick.
+     * Baca potion effects yang aktif di entity.
+     * Dipanggil setelah delay 5 tick supaya MM/MMOItems sudah apply effect-nya.
      */
-    private String buildCombinedEffects(LivingEntity entity, UUID dummyUuid) {
-        Set<String> effectNames = new LinkedHashSet<>();
-
-        // Efek aktif yang sudah ada di entity (termasuk yang baru dari tick ini)
-        for (PotionEffect effect : entity.getActivePotionEffects()) {
-            int durationTicks = effect.getDuration();
-            String durationStr = durationTicks >= 32767 ? "∞" : (durationTicks / 20) + "s";
-            effectNames.add(formatEffectName(effect.getType().getName())
-                    + " " + (effect.getAmplifier() + 1)
-                    + " [" + durationStr + "]");
+    private String buildEffects(LivingEntity entity) {
+        Collection<PotionEffect> effects = entity.getActivePotionEffects();
+        if (effects.isEmpty()) {
+            return plugin.getConfig().getBoolean("analytics.show-no-effects", true) ? "None" : "";
         }
 
-        // Tambahkan efek pending yang ter-cache dari EntityPotionEffectEvent
-        // (sebagai fallback jika belum muncul di getActivePotionEffects)
-        List<String> pending = pendingEffects.get(dummyUuid);
-        if (pending != null) {
-            effectNames.addAll(pending);
+        List<String> result = new ArrayList<>();
+        for (PotionEffect effect : effects) {
+            String name = effect.getType().getName().replace("_", " ");
+            int amp = effect.getAmplifier() + 1;
+            int dur = effect.getDuration();
+            String durStr = dur >= 32767 ? "∞" : (dur / 20) + "s";
+            result.add(name + " " + amp + " [" + durStr + "]");
         }
-
-        if (effectNames.isEmpty()) {
-            boolean showNone = plugin.getConfig().getBoolean("analytics.show-no-effects", true);
-            return showNone ? "None" : "";
-        }
-
-        return String.join(", ", effectNames);
-    }
-
-    private String formatEffectName(String raw) {
-        return raw.replace("_", " ");
+        return String.join(", ", result);
     }
 
     private void broadcastAnalytics(String message, Player directAttacker) {
         boolean broadcast = plugin.getConfig().getBoolean("settings.broadcast-damage", false);
 
         if (directAttacker != null && directAttacker.hasPermission("visantara.damage.output")) {
-            sendMessage(directAttacker, message);
+            directAttacker.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
         }
 
         if (broadcast) {
             for (Player online : plugin.getServer().getOnlinePlayers()) {
                 if (online.hasPermission("visantara.damage.output")
                         && (directAttacker == null || !online.equals(directAttacker))) {
-                    sendMessage(online, message);
+                    online.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
                 }
             }
         }
-    }
-
-    private void sendMessage(Player player, String message) {
-        player.sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
     }
 }

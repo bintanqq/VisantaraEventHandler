@@ -22,6 +22,8 @@ public class DummyManager {
     public static final String DUMMY_TYPE_KEY = "visantara_dummy_type";
     public static final String DUMMY_MAX_HP_KEY = "visantara_dummy_maxhp";
 
+    private static final double NMS_MAX_HEALTH_CAP = 1024.0;
+
     private final VisantaraEventHandler plugin;
     private final Map<UUID, DummyEntity> dummies = new ConcurrentHashMap<>();
 
@@ -44,7 +46,6 @@ public class DummyManager {
             Optional<MythicMob> mythicMobOpt = MythicProvider.get().getMobManager().getMythicMob(mythicType);
             if (mythicMobOpt.isPresent()) {
                 try {
-                    // MM5 API: spawnMythicMob returns Entity directly via APIHelper
                     Entity spawned = MythicBukkit.inst().getAPIHelper().spawnMythicMob(mythicType, location);
                     if (!(spawned instanceof LivingEntity living)) {
                         plugin.getLogger().warning("MythicMob type '" + mythicType + "' did not spawn a LivingEntity.");
@@ -69,12 +70,17 @@ public class DummyManager {
         setFullHealth(entity);
         entity.setRemoveWhenFarAway(false);
         entity.setAI(false);
-        entity.setInvulnerable(false); // We handle invincibility via event cancellation
+        entity.setInvulnerable(false);
+
+        if (plugin.getConfig().getBoolean("dummy.mob.disable-sounds", true)) {
+            entity.setSilent(true);
+        }
 
         DummyEntity dummy = new DummyEntity(entity.getUniqueId(), DummyType.MOB, maxHp, nametag);
         dummies.put(entity.getUniqueId(), dummy);
 
-        updateNametag(entity, dummy);
+        // Tampilkan HP awal = maxHp
+        updateNametagWithHp(entity, dummy, maxHp);
         return dummy;
     }
 
@@ -82,18 +88,18 @@ public class DummyManager {
         double maxHp = plugin.getConfig().getDouble("dummy.player.max-hp", 2000.0);
         String nametag = plugin.getConfig().getString("dummy.player.nametag", "&b[PLAYER DUMMY] &c❤ <hp>/<maxhp>");
 
-        // Use a Zombie with disguise-like metadata to flag it as player-type for MMOItems/MythicMobs
-        // NMS-based PlayerNPC is complex; we use a Zombie flagged with custom metadata.
-        // For MythicMobs @PlayersInRadius compatibility, we register it as a fake "player" target via metadata.
         Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
         zombie.setBaby(false);
-        zombie.setShouldBurnInDay(false); // OK karena sudah di-cast ke Zombie
+        zombie.setShouldBurnInDay(false);
         zombie.setCanPickupItems(false);
         zombie.setRemoveWhenFarAway(false);
         zombie.setAI(false);
 
+        if (plugin.getConfig().getBoolean("dummy.player.disable-sounds", true)) {
+            zombie.setSilent(true);
+        }
+
         applyDummyMeta(zombie, DummyType.PLAYER, maxHp);
-        // Additional metadata flag to hint plugins this should be treated as a player target
         zombie.setMetadata("visantara_player_dummy", new FixedMetadataValue(plugin, true));
 
         setEntityMaxHp(zombie, maxHp);
@@ -102,7 +108,7 @@ public class DummyManager {
         DummyEntity dummy = new DummyEntity(zombie.getUniqueId(), DummyType.PLAYER, maxHp, nametag);
         dummies.put(zombie.getUniqueId(), dummy);
 
-        updateNametag(zombie, dummy);
+        updateNametagWithHp(zombie, dummy, maxHp);
         return dummy;
     }
 
@@ -134,7 +140,6 @@ public class DummyManager {
             }
             return living;
         }
-        // Fallback
         entity.remove();
         return (LivingEntity) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
     }
@@ -144,12 +149,6 @@ public class DummyManager {
         entity.setMetadata(DUMMY_TYPE_KEY, new FixedMetadataValue(plugin, type.name()));
         entity.setMetadata(DUMMY_MAX_HP_KEY, new FixedMetadataValue(plugin, maxHp));
     }
-
-    /**
-     * Paper 1.21.4 NMS hard cap: MAX_HEALTH attribute tidak boleh melebihi 1024.0.
-     * Urutan wajib: setBaseValue dulu, baru setHealth.
-     */
-    private static final double NMS_MAX_HEALTH_CAP = 1024.0;
 
     private void setEntityMaxHp(LivingEntity entity, double requestedHp) {
         double capped = Math.min(requestedHp, NMS_MAX_HEALTH_CAP);
@@ -166,26 +165,35 @@ public class DummyManager {
         entity.setHealth(Math.min(max, NMS_MAX_HEALTH_CAP));
     }
 
-    public void updateNametag(LivingEntity entity, DummyEntity dummy) {
+    /**
+     * Update nametag dengan HP simulasi yang diberikan dari DamageListener.
+     * DummyManager TIDAK baca entity.getHealth() karena selalu full (invincible restore).
+     */
+    public void updateNametagWithHp(LivingEntity entity, DummyEntity dummy, double simulatedHp) {
         String template = dummy.getNametag();
-        String currentHp = String.format("%.1f", entity.getHealth());
+        String hp = String.format("%.1f", Math.max(0, simulatedHp));
         String maxHp = String.format("%.1f", dummy.getMaxHp());
 
         String processed = template
-                .replace("<hp>", currentHp)
+                .replace("<hp>", hp)
                 .replace("<maxhp>", maxHp);
 
-        // Support both legacy (&) and MiniMessage formats
+        net.kyori.adventure.text.Component component;
         if (processed.contains("&")) {
-            // Convert legacy to Adventure component
-            net.kyori.adventure.text.Component component = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
-                    .legacyAmpersand()
-                    .deserialize(processed);
-            entity.customName(component);
+            component = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+                    .legacyAmpersand().deserialize(processed);
         } else {
-            entity.customName(MiniMessage.miniMessage().deserialize(processed));
+            component = MiniMessage.miniMessage().deserialize(processed);
         }
+        entity.customName(component);
         entity.setCustomNameVisible(true);
+    }
+
+    /**
+     * Legacy method — dipanggil dari tempat lain jika perlu reset nametag ke maxHp.
+     */
+    public void updateNametag(LivingEntity entity, DummyEntity dummy) {
+        updateNametagWithHp(entity, dummy, dummy.getMaxHp());
     }
 
     // -----------------------------------------------------------------------
