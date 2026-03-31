@@ -81,7 +81,6 @@ public class DropConfig {
 
                     if (amountMin > amountMax) amountMin = amountMax;
 
-                    // Parse biomes
                     Set<Biome> biomes = new HashSet<>();
                     Object biomeObj = raw.get("biomes");
                     if (biomeObj instanceof List<?> biomeList) {
@@ -96,7 +95,6 @@ public class DropConfig {
                         }
                     }
 
-                    // Parse weather conditions (optional)
                     Set<String> weather = new HashSet<>();
                     Object weatherObj = raw.get("weather");
                     if (weatherObj instanceof List<?> weatherList) {
@@ -110,7 +108,6 @@ public class DropConfig {
                         }
                     }
 
-                    // Parse time conditions (optional)
                     Set<String> time = new HashSet<>();
                     Object timeObj = raw.get("time");
                     if (timeObj instanceof List<?> timeList) {
