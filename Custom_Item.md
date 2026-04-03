@@ -141,3 +141,45 @@ Heart of the Earth - Hammer
    knockback-resistance: 14
    mana: 25
    mana-cost: 20
+
+
+Organic Blade (Sword)
+Material:
+- 1x Potion of Poison
+- 32x Leaf Stinger (8% drop rate dari menghancurkan semua jenis Leaves)
+- 64x Compressed Spruce Log (9x Spruce Log = 1)
+- 32x Packed Seed (16x Wheat Seed = 1)
+
+Molten Axe (Axe)
+Material:
+- 1x Bucket of Lava
+- 16x Obsidian Pieces (12% drop rate dari menghancurkan Obsidian)
+- 32x Melted Steel (Membakar 1x Iron Block = 1)
+- 64x Packed Magma (9x Magma Block = 1)
+
+Electric Wand (Staff)
+Material:
+- 1x Compressed Iron (9 Iron Block = 1)
+- 16x Electric Reed (20% drop rate dari menghancurkan Wheat saat hujan)
+- 16x Powered Copper (1x Copper Block + 8x Block of Redstone = 1)
+- 32x Ligthning Rod
+
+
+Frost Wand (Staff)
+Material:
+- 1x Frozen Rod (8x Ice + 1x Stick = 1)
+- 32x Ice Crystal (8x Ice + 1x Amethys Shard = 1)
+- 16x Snowy Seed (15% drop rate dari menghancurkan Grass di Snowy Biome)
+- 64x Packed Ice
+
+Hearth of the Earth (Hammer)
+Material:
+- 5x Obsidian
+- 16x Packed Amethyst (4x Block of Amethyst = 1)
+- 32x Wet Soil (20% drop rate dari menghancurkan dirt di Ocean Biome)
+- 64x Packed Sand (9x Sand = 1)
+  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'ORGANIC_BLADE' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=LEAF_STINGER,amount=32,display="Leaf Stinger"}': Could not match ingredient
+  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'MOLTEN_AXE' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=OBSIDIAN_PIECES,amount=16,display="Obsidian Pieces"}': Could not match ingredient
+  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'ELECTRIC_WAND' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=COMPRESSED_IRON,amount=1,display="Compressed Iron"}': Could not match ingredient
+  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'FROST_WAND' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=FROZEN_ROD,amount=1,display="Frozen Rod"}': Could not match ingredient
+  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'HEART_OF_THE_EARTH' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=PACKED_AMETHYST,amount=16,display="Packed Amethyst"}': Could not match ingredient
