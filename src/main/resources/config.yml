@@ -57,17 +57,6 @@ natural-drops:
     - TORCHFLOWER_SEEDS
     - PITCHER_POD
 
-  player-placed-whitelist:
-    - WHEAT
-    - CARROTS
-    - POTATOES
-    - BEETROOTS
-    - NETHER_WART
-    - COCOA
-    - SWEET_BERRY_BUSH
-    - TORCHFLOWER_CROP
-    - PITCHER_CROP
-
   blocks:
     OAK_LEAVES:
       drops:
