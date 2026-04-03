@@ -27,27 +27,24 @@ public class DropConfig {
 
         public boolean appliesToWeather(boolean isRaining, boolean isThundering) {
             if (weather.isEmpty()) return true;
-
             if (isThundering && weather.contains("THUNDER")) return true;
             if (isRaining && weather.contains("RAIN")) return true;
             if (!isRaining && !isThundering && weather.contains("CLEAR")) return true;
-
             return false;
         }
 
         public boolean appliesToTime(long worldTime) {
             if (time.isEmpty()) return true;
-
             boolean isDay = worldTime >= 0 && worldTime < 12000;
-
             if (isDay && time.contains("DAY")) return true;
             if (!isDay && time.contains("NIGHT")) return true;
-
             return false;
         }
     }
 
     private final Map<Material, List<DropEntry>> dropTable = new HashMap<>();
+
+    private final Set<Material> placeIgnoreList = new HashSet<>();
 
     public DropConfig(VisantaraEventHandler plugin) {
         load(plugin);
@@ -55,6 +52,16 @@ public class DropConfig {
 
     public void load(VisantaraEventHandler plugin) {
         dropTable.clear();
+        placeIgnoreList.clear();
+
+        List<String> ignoreList = plugin.getConfig().getStringList("natural-drops.place-ignore-list");
+        for (String s : ignoreList) {
+            try {
+                placeIgnoreList.add(Material.valueOf(s.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("natural-drops: invalid material in place-ignore-list: '" + s + "', skipping.");
+            }
+        }
 
         ConfigurationSection blocksSection = plugin.getConfig().getConfigurationSection("natural-drops.blocks");
         if (blocksSection == null) return;
@@ -133,6 +140,7 @@ public class DropConfig {
         }
 
         plugin.getLogger().info("natural-drops: loaded " + dropTable.size() + " block drop configuration(s).");
+        plugin.getLogger().info("natural-drops: place-ignore-list=" + placeIgnoreList.size() + " material(s).");
     }
 
     public List<DropEntry> getDrops(Material material) {
@@ -141,6 +149,10 @@ public class DropConfig {
 
     public boolean hasDrop(Material material) {
         return dropTable.containsKey(material);
+    }
+
+    public boolean isPlaceIgnored(Material material) {
+        return placeIgnoreList.contains(material);
     }
 
     private double toDouble(Object obj) {

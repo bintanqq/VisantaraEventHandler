@@ -3,11 +3,12 @@ package me.bintanq.naturaldrops;
 import me.bintanq.VisantaraEventHandler;
 import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
-import org.bukkit.block.Biome;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
+import org.bukkit.block.data.Ageable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -33,6 +34,10 @@ public class BlockListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
+        Material type = event.getBlock().getType();
+
+        if (dropConfig.isPlaceIgnored(type)) return;
+
         dropManager.markPlayerPlaced(event.getBlock().getLocation());
     }
 
@@ -40,14 +45,17 @@ public class BlockListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         Location loc = block.getLocation();
-        Player player = event.getPlayer();
         World world = block.getWorld();
 
-        boolean wasPlayerPlaced = dropManager.isPlayerPlaced(loc);
+        if (!dropConfig.isPlaceIgnored(block.getType())) {
+            if (dropManager.isPlayerPlaced(loc)) {
+                dropManager.unmarkPlayerPlaced(loc);
+                return;
+            }
+        }
 
-        if (wasPlayerPlaced) {
-            dropManager.unmarkPlayerPlaced(loc);
-            return;
+        if (block.getBlockData() instanceof Ageable ageable) {
+            if (ageable.getAge() < ageable.getMaximumAge()) return;
         }
 
         if (!plugin.getConfig().getBoolean("natural-drops.enabled", true)) return;
@@ -62,11 +70,8 @@ public class BlockListener implements Listener {
 
         for (DropConfig.DropEntry entry : drops) {
             if (!entry.appliesToBiome(biome)) continue;
-
             if (!entry.appliesToWeather(isRaining, isThundering)) continue;
-
             if (!entry.appliesToTime(worldTime)) continue;
-
             if (random.nextDouble() > entry.chance()) continue;
 
             int amount = entry.amountMin() == entry.amountMax()
