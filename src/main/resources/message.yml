@@ -1,0 +1,38 @@
+prefix: "&7[&bVEventHandler&7] "
+
+no-permission: "&cNo permission."
+players-only: "This command can only be used by players."
+
+dummy:
+  usage: "&eUsage: /vhandler dummy <spawn <mob|player>|remove>"
+  spawn:
+    usage: "&eUsage: /vhandler dummy spawn <mob|player>"
+    mob: "&aSpawned &eMob Dummy&a. &7UUID: &f{uuid}"
+    player: "&aSpawned &bPlayer Dummy&a. &7UUID: &f{uuid}"
+    unknown-type: "&cUnknown type. Use: mob or player"
+  remove:
+    success: "&aRemoved &e{count}&a dummy(s) within &e{radius}&a blocks."
+
+drop:
+  usage: "&eUsage: /vhandler drop <check|mark>"
+  no-block: "&cNo block in sight (max 8 blocks)."
+  check:
+    status-placed: "&cPlayer-Placed &7(no MMOItems drop)"
+    status-natural: "&aNatural &7(MMOItems drop eligible)"
+    result: "&7Block: &f{block} &8| &7Status: {status} &8| &7Pos: &f{x},{y},{z}"
+  mark:
+    usage: "&eUsage: /vhandler drop mark <placed|natural>"
+    placed: "&7Block &f{block} &7at &f{x},{y},{z} &7marked as &cPlayer-Placed&7."
+    natural: "&7Block &f{block} &7at &f{x},{y},{z} &7marked as &aNatural&7."
+    unknown-type: "&cUnknown mark type. Use: placed or natural"
+
+reload:
+  success: "&aConfiguration reloaded."
+
+usage: |
+  &eCommands:
+   &f/vhandler dummy spawn <mob|player>
+   &f/vhandler dummy remove
+   &f/vhandler drop check
+   &f/vhandler drop mark <placed|natural>
+   &f/vhandler reload

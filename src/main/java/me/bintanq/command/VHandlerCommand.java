@@ -3,10 +3,8 @@ package me.bintanq.command;
 import me.bintanq.VisantaraEventHandler;
 import me.bintanq.dummy.DummyEntity;
 import me.bintanq.manager.DummyManager;
+import me.bintanq.manager.MessageManager;
 import me.bintanq.naturaldrops.NaturalDropManager;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -20,24 +18,25 @@ import java.util.List;
 
 public class VHandlerCommand implements CommandExecutor, TabCompleter {
 
-    private static final Component PREFIX = LegacyComponentSerializer.legacyAmpersand()
-            .deserialize("&8[&6VEH&8] ");
-
     private final VisantaraEventHandler plugin;
 
     public VHandlerCommand(VisantaraEventHandler plugin) {
         this.plugin = plugin;
     }
 
+    private MessageManager msg() {
+        return plugin.getMessageManager();
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("This command can only be used by players.");
+            sender.sendMessage(msg().getNoPrefix("players-only"));
             return true;
         }
 
         if (!player.hasPermission("visantara.use")) {
-            player.sendMessage(PREFIX.append(Component.text("No permission.", NamedTextColor.RED)));
+            player.sendMessage(msg().get("no-permission"));
             return true;
         }
 
@@ -58,9 +57,7 @@ public class VHandlerCommand implements CommandExecutor, TabCompleter {
 
     private void handleDummy(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(PREFIX.append(
-                    LegacyComponentSerializer.legacyAmpersand().deserialize("&eUsage: /vhandler dummy <spawn <mob|player>|remove>")
-            ));
+            player.sendMessage(msg().get("dummy.usage"));
             return;
         }
 
@@ -69,61 +66,44 @@ public class VHandlerCommand implements CommandExecutor, TabCompleter {
         switch (args[1].toLowerCase()) {
             case "spawn" -> {
                 if (!player.hasPermission("visantara.dummy.spawn")) {
-                    player.sendMessage(PREFIX.append(Component.text("No permission.", NamedTextColor.RED)));
+                    player.sendMessage(msg().get("no-permission"));
                     return;
                 }
                 if (args.length < 3) {
-                    player.sendMessage(PREFIX.append(
-                            LegacyComponentSerializer.legacyAmpersand().deserialize("&eUsage: /vhandler dummy spawn <mob|player>")
-                    ));
+                    player.sendMessage(msg().get("dummy.spawn.usage"));
                     return;
                 }
                 switch (args[2].toLowerCase()) {
                     case "mob" -> {
                         DummyEntity dummy = manager.spawnMobDummy(player.getLocation());
-                        player.sendMessage(PREFIX.append(
-                                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                        "&aSpawned &eMob Dummy&a. &7UUID: &f" + dummy.getUuid()
-                                )
-                        ));
+                        player.sendMessage(msg().get("dummy.spawn.mob",
+                                MessageManager.of("uuid", dummy.getUuid().toString())));
                     }
                     case "player" -> {
                         DummyEntity dummy = manager.spawnPlayerDummy(player.getLocation());
-                        player.sendMessage(PREFIX.append(
-                                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                        "&aSpawned &bPlayer Dummy&a. &7UUID: &f" + dummy.getUuid()
-                                )
-                        ));
+                        player.sendMessage(msg().get("dummy.spawn.player",
+                                MessageManager.of("uuid", dummy.getUuid().toString())));
                     }
-                    default -> player.sendMessage(PREFIX.append(
-                            Component.text("Unknown type. Use: mob or player", NamedTextColor.RED)
-                    ));
+                    default -> player.sendMessage(msg().get("dummy.spawn.unknown-type"));
                 }
             }
             case "remove" -> {
                 if (!player.hasPermission("visantara.dummy.remove")) {
-                    player.sendMessage(PREFIX.append(Component.text("No permission.", NamedTextColor.RED)));
+                    player.sendMessage(msg().get("no-permission"));
                     return;
                 }
                 double radius = plugin.getConfig().getDouble("settings.remove-radius", 20.0);
                 int removed = manager.removeDummiesInRadius(player.getLocation(), radius);
-                player.sendMessage(PREFIX.append(
-                        LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                "&aRemoved &e" + removed + "&a dummy(s) within &e" + (int) radius + "&a blocks."
-                        )
-                ));
+                player.sendMessage(msg().get("dummy.remove.success",
+                        MessageManager.of("count", String.valueOf(removed), "radius", String.valueOf((int) radius))));
             }
-            default -> player.sendMessage(PREFIX.append(
-                    LegacyComponentSerializer.legacyAmpersand().deserialize("&eUsage: /vhandler dummy <spawn <mob|player>|remove>")
-            ));
+            default -> player.sendMessage(msg().get("dummy.usage"));
         }
     }
 
     private void handleDrop(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(PREFIX.append(
-                    LegacyComponentSerializer.legacyAmpersand().deserialize("&eUsage: /vhandler drop <check|mark>")
-            ));
+            player.sendMessage(msg().get("drop.usage"));
             return;
         }
 
@@ -132,92 +112,75 @@ public class VHandlerCommand implements CommandExecutor, TabCompleter {
         switch (args[1].toLowerCase()) {
             case "check" -> {
                 if (!player.hasPermission("visantara.drop.check")) {
-                    player.sendMessage(PREFIX.append(Component.text("No permission.", NamedTextColor.RED)));
+                    player.sendMessage(msg().get("no-permission"));
                     return;
                 }
                 Block target = player.getTargetBlockExact(8);
                 if (target == null) {
-                    player.sendMessage(PREFIX.append(Component.text("No block in sight (max 8 blocks).", NamedTextColor.RED)));
+                    player.sendMessage(msg().get("drop.no-block"));
                     return;
                 }
                 boolean placed = dropManager.isPlayerPlaced(target.getLocation());
-                String status = placed ? "&cPlayer-Placed &7(no MMOItems drop)" : "&aNatural &7(MMOItems drop eligible)";
-                player.sendMessage(PREFIX.append(
-                        LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                "&7Block: &f" + target.getType().name()
-                                        + " &8| &7Status: " + status
-                                        + " &8| &7Pos: &f" + target.getX() + "," + target.getY() + "," + target.getZ()
-                        )
-                ));
+                String status = msg().getRaw(placed ? "drop.check.status-placed" : "drop.check.status-natural");
+                player.sendMessage(msg().get("drop.check.result", MessageManager.of(
+                        "block", target.getType().name(),
+                        "status", status,
+                        "x", String.valueOf(target.getX()),
+                        "y", String.valueOf(target.getY()),
+                        "z", String.valueOf(target.getZ())
+                )));
             }
             case "mark" -> {
                 if (!player.hasPermission("visantara.drop.mark")) {
-                    player.sendMessage(PREFIX.append(Component.text("No permission.", NamedTextColor.RED)));
+                    player.sendMessage(msg().get("no-permission"));
                     return;
                 }
                 if (args.length < 3) {
-                    player.sendMessage(PREFIX.append(
-                            LegacyComponentSerializer.legacyAmpersand().deserialize("&eUsage: /vhandler drop mark <placed|natural>")
-                    ));
+                    player.sendMessage(msg().get("drop.mark.usage"));
                     return;
                 }
                 Block target = player.getTargetBlockExact(8);
                 if (target == null) {
-                    player.sendMessage(PREFIX.append(Component.text("No block in sight (max 8 blocks).", NamedTextColor.RED)));
+                    player.sendMessage(msg().get("drop.no-block"));
                     return;
                 }
                 switch (args[2].toLowerCase()) {
                     case "placed" -> {
                         dropManager.markPlayerPlaced(target.getLocation());
-                        player.sendMessage(PREFIX.append(
-                                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                        "&7Block &f" + target.getType().name() + " &7at &f"
-                                                + target.getX() + "," + target.getY() + "," + target.getZ()
-                                                + " &7marked as &cPlayer-Placed&7."
-                                )
-                        ));
+                        player.sendMessage(msg().get("drop.mark.placed", MessageManager.of(
+                                "block", target.getType().name(),
+                                "x", String.valueOf(target.getX()),
+                                "y", String.valueOf(target.getY()),
+                                "z", String.valueOf(target.getZ())
+                        )));
                     }
                     case "natural" -> {
                         dropManager.forceMarkNatural(target.getLocation());
-                        player.sendMessage(PREFIX.append(
-                                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                                        "&7Block &f" + target.getType().name() + " &7at &f"
-                                                + target.getX() + "," + target.getY() + "," + target.getZ()
-                                                + " &7marked as &aNatural&7."
-                                )
-                        ));
+                        player.sendMessage(msg().get("drop.mark.natural", MessageManager.of(
+                                "block", target.getType().name(),
+                                "x", String.valueOf(target.getX()),
+                                "y", String.valueOf(target.getY()),
+                                "z", String.valueOf(target.getZ())
+                        )));
                     }
-                    default -> player.sendMessage(PREFIX.append(
-                            Component.text("Unknown mark type. Use: placed or natural", NamedTextColor.RED)
-                    ));
+                    default -> player.sendMessage(msg().get("drop.mark.unknown-type"));
                 }
             }
-            default -> player.sendMessage(PREFIX.append(
-                    LegacyComponentSerializer.legacyAmpersand().deserialize("&eUsage: /vhandler drop <check|mark>")
-            ));
+            default -> player.sendMessage(msg().get("drop.usage"));
         }
     }
 
     private void handleReload(Player player) {
         if (!player.hasPermission("visantara.use")) {
-            player.sendMessage(PREFIX.append(Component.text("No permission.", NamedTextColor.RED)));
+            player.sendMessage(msg().get("no-permission"));
             return;
         }
         plugin.reload();
-        player.sendMessage(PREFIX.append(Component.text("Configuration reloaded.", NamedTextColor.GREEN)));
+        player.sendMessage(msg().get("reload.success"));
     }
 
     private void sendUsage(Player player) {
-        player.sendMessage(PREFIX.append(
-                LegacyComponentSerializer.legacyAmpersand().deserialize(
-                        "&eCommands:\n" +
-                                " &f/vhandler dummy spawn <mob|player>\n" +
-                                " &f/vhandler dummy remove\n" +
-                                " &f/vhandler drop check\n" +
-                                " &f/vhandler drop mark <placed|natural>\n" +
-                                " &f/vhandler reload"
-                )
-        ));
+        player.sendMessage(msg().get("usage"));
     }
 
     @Override

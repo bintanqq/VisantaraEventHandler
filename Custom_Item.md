@@ -178,8 +178,3 @@ Material:
 - 16x Packed Amethyst (4x Block of Amethyst = 1)
 - 32x Wet Soil (20% drop rate dari menghancurkan dirt di Ocean Biome)
 - 64x Packed Sand (9x Sand = 1)
-  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'ORGANIC_BLADE' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=LEAF_STINGER,amount=32,display="Leaf Stinger"}': Could not match ingredient
-  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'MOLTEN_AXE' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=OBSIDIAN_PIECES,amount=16,display="Obsidian Pieces"}': Could not match ingredient
-  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'ELECTRIC_WAND' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=COMPRESSED_IRON,amount=1,display="Compressed Iron"}': Could not match ingredient
-  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'FROST_WAND' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=FROZEN_ROD,amount=1,display="Frozen Rod"}': Could not match ingredient
-  [22:40:18 ERROR]: [MMOItems] An issue occurred registering recipe 'HEART_OF_THE_EARTH' from crafting station 'nature': Could not load ingredient 'mmoitems{type=MATERIAL,id=PACKED_AMETHYST,amount=16,display="Packed Amethyst"}': Could not match ingredient

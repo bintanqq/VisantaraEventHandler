@@ -3,11 +3,14 @@ package me.bintanq;
 import me.bintanq.command.VHandlerCommand;
 import me.bintanq.listener.DamageListener;
 import me.bintanq.manager.DummyManager;
+import me.bintanq.manager.MessageManager;
 import me.bintanq.naturaldrops.BlockListener;
 import me.bintanq.naturaldrops.DropConfig;
 import me.bintanq.naturaldrops.NaturalDropManager;
+import me.bintanq.util.ConfigUpdater;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.IOException;
 import java.util.logging.Level;
 
 public final class VisantaraEventHandler extends JavaPlugin {
@@ -16,14 +19,18 @@ public final class VisantaraEventHandler extends JavaPlugin {
     private DummyManager dummyManager;
     private NaturalDropManager naturalDropManager;
     private DropConfig dropConfig;
+    private MessageManager messageManager;
 
     @Override
     public void onEnable() {
         instance = this;
 
         saveDefaultConfig();
+        runConfigUpdater();
+
         reloadConfig();
 
+        this.messageManager = new MessageManager(this);
         this.dummyManager = new DummyManager(this);
         this.naturalDropManager = new NaturalDropManager(this);
         this.dropConfig = new DropConfig(this);
@@ -43,6 +50,19 @@ public final class VisantaraEventHandler extends JavaPlugin {
             naturalDropManager.close();
         }
         getLogger().info("VisantaraEventHandler disabled.");
+    }
+
+    private void runConfigUpdater() {
+        try {
+            ConfigUpdater.update(this, "config.yml");
+        } catch (IOException e) {
+            getLogger().log(Level.WARNING, "Failed to update config.yml", e);
+        }
+        try {
+            ConfigUpdater.update(this, "message.yml");
+        } catch (IOException e) {
+            getLogger().log(Level.WARNING, "Failed to update message.yml", e);
+        }
     }
 
     private void registerCommands() {
@@ -77,8 +97,14 @@ public final class VisantaraEventHandler extends JavaPlugin {
         return dropConfig;
     }
 
+    public MessageManager getMessageManager() {
+        return messageManager;
+    }
+
     public void reload() {
+        runConfigUpdater();
         reloadConfig();
+        messageManager.load();
         dropConfig.load(this);
         dummyManager.removeAllDummies();
         getLogger().info("VisantaraEventHandler configuration reloaded.");
