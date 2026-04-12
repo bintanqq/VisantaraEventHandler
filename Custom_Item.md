@@ -167,14 +167,21 @@ Material:
 
 Frost Wand (Staff)
 Material:
-- 1x Frozen Rod (8x Ice + 1x Stick = 1)
-- 32x Ice Crystal (8x Ice + 1x Amethys Shard = 1)
+- 1x Frozen Rod (64x Ice + 1x Stick = 1)
+- 32x Ice Crystal (16x Ice + 9x Amethys Shard = 1)
 - 16x Snowy Seed (15% drop rate dari menghancurkan Grass di Snowy Biome)
 - 64x Packed Ice
 
 Hearth of the Earth (Hammer)
 Material:
 - 5x Obsidian
-- 16x Packed Amethyst (4x Block of Amethyst = 1)
+- 16x Packed Amethyst (9x Block of Amethyst = 1)
 - 32x Wet Soil (20% drop rate dari menghancurkan dirt di Ocean Biome)
 - 64x Packed Sand (9x Sand = 1)
+
+DEFAULT 2
+VIP 3
+MVP 4
+ELITE 5
+LEGEND 6
+PREMIUM 7

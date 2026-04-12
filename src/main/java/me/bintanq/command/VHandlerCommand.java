@@ -5,6 +5,8 @@ import me.bintanq.dummy.DummyEntity;
 import me.bintanq.manager.DummyManager;
 import me.bintanq.manager.MessageManager;
 import me.bintanq.naturaldrops.NaturalDropManager;
+import me.bintanq.cinematic.ForgeCinematicListener;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -49,6 +51,7 @@ public class VHandlerCommand implements CommandExecutor, TabCompleter {
             case "dummy" -> handleDummy(player, args);
             case "drop" -> handleDrop(player, args);
             case "reload" -> handleReload(player);
+            case "cinematic" -> handleCinematic(player, args);
             default -> sendUsage(player);
         }
 
@@ -179,17 +182,30 @@ public class VHandlerCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(msg().get("reload.success"));
     }
 
+    private void handleCinematic(Player player, String[] args) {
+        if (!player.hasPermission("visantara.cinematic.test")) {
+            player.sendMessage(msg().get("no-permission"));
+            return;
+        }
+        if (args.length < 3 || !args[1].equalsIgnoreCase("test")) {
+            player.sendMessage("§eUsage: /vhandler cinematic test <typewriter-page-id>");
+            return;
+        }
+        plugin.getForgeCinematicListener().triggerTest(player, args[2]);
+    }
+
     private void sendUsage(Player player) {
         player.sendMessage(msg().get("usage"));
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (args.length == 1) return Arrays.asList("dummy", "drop", "reload");
+        if (args.length == 1) return Arrays.asList("dummy", "drop", "reload", "cinematic");
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
                 case "dummy" -> Arrays.asList("spawn", "remove");
                 case "drop" -> Arrays.asList("check", "mark");
+                case "cinematic" -> Arrays.asList("test");
                 default -> Collections.emptyList();
             };
         }

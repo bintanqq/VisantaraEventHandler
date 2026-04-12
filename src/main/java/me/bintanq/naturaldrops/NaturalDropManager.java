@@ -146,6 +146,10 @@ public class NaturalDropManager {
         }
     }
 
+    public Connection borrowConnection() throws SQLException {
+        return dataSource.getConnection();
+    }
+
     private String toKey(String world, int x, int y, int z) {
         return world + "," + x + "," + y + "," + z;
     }

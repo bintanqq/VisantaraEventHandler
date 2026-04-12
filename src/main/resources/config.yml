@@ -27,6 +27,14 @@ analytics:
   decimal-places: 2
   show-no-effects: true
 
+forge-cinematic:
+  enabled: true
+  items:
+  # MMOITEMS_ITEM_ID: cinematic-page = nama page di Typewriter
+    MY_SWORD:
+      cinematic-page: forge_sword_cinematic
+      only-once: true
+
 # ─────────────────────────────────────────
 #  Natural Block Drops
 # ─────────────────────────────────────────

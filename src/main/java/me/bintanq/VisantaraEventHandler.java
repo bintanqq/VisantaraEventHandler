@@ -8,6 +8,7 @@ import me.bintanq.naturaldrops.BlockListener;
 import me.bintanq.naturaldrops.DropConfig;
 import me.bintanq.naturaldrops.NaturalDropManager;
 import me.bintanq.util.ConfigUpdater;
+import me.bintanq.cinematic.ForgeCinematicListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ public final class VisantaraEventHandler extends JavaPlugin {
     private NaturalDropManager naturalDropManager;
     private DropConfig dropConfig;
     private MessageManager messageManager;
+    private ForgeCinematicListener forgeCinematicListener; // tambah field
 
     @Override
     public void onEnable() {
@@ -79,6 +81,8 @@ public final class VisantaraEventHandler extends JavaPlugin {
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new DamageListener(this), this);
         getServer().getPluginManager().registerEvents(new BlockListener(this, naturalDropManager, dropConfig), this);
+        this.forgeCinematicListener = new ForgeCinematicListener(this);
+        getServer().getPluginManager().registerEvents(forgeCinematicListener, this);
     }
 
     public static VisantaraEventHandler getInstance() {
@@ -99,6 +103,10 @@ public final class VisantaraEventHandler extends JavaPlugin {
 
     public MessageManager getMessageManager() {
         return messageManager;
+    }
+
+    public ForgeCinematicListener getForgeCinematicListener() {
+        return forgeCinematicListener;
     }
 
     public void reload() {

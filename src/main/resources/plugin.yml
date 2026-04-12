@@ -12,6 +12,7 @@ depend:
 
 softdepend:
   - MythicLib
+  - ProtocolLib   # ← tambah ini
 
 commands:
   vhandler:
@@ -40,4 +41,7 @@ permissions:
     default: op
   visantara.damage.output:
     description: Receive damage analytics in chat
+    default: op
+  visantara.cinematic.test:
+    description: Test forge cinematic
     default: op
