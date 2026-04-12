@@ -77,10 +77,6 @@ public class ForgeCinematicListener implements Listener {
                         "tw cinematic start " + finalPage + " " + playerName));
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // PUBLIC API — test command
-    // ══════════════════════════════════════════════════════════════════
-
     public void triggerTest(Player player, String pageId) {
         if (pageId == null || pageId.isEmpty()) {
             player.sendMessage("§cUsage: /vhandler cinematic test <pageId>");
@@ -90,10 +86,6 @@ public class ForgeCinematicListener implements Listener {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                         "tw cinematic start " + pageId + " " + player.getName()));
     }
-
-    // ══════════════════════════════════════════════════════════════════
-    // SQLite — one-time persistence
-    // ══════════════════════════════════════════════════════════════════
 
     private void initSeenTable() {
         try (Connection conn = plugin.getNaturalDropManager().borrowConnection();

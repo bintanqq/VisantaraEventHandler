@@ -12,7 +12,8 @@ depend:
 
 softdepend:
   - MythicLib
-  - ProtocolLib   # ← tambah ini
+  - ProtocolLib
+  - LuckPerms
 
 commands:
   vhandler:

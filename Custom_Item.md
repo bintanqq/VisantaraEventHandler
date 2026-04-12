@@ -179,6 +179,9 @@ Material:
 - 32x Wet Soil (20% drop rate dari menghancurkan dirt di Ocean Biome)
 - 64x Packed Sand (9x Sand = 1)
 
+
+Max Queue Ranks:
+
 DEFAULT 2
 VIP 3
 MVP 4

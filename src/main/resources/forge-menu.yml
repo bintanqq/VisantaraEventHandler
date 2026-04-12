@@ -1,0 +1,114 @@
+# ================================================================
+#  Forge Station Menu - VisantaraEventHandler
+# ================================================================
+#
+#  Trigger : klik kanan/kiri block di koordinat yang terdaftar
+#  GUI     : satu template, per rank hanya beda max-queue,
+#            title-suffix, dan fill-item.
+#
+#  Placeholder di lore/station-id:
+#    {max_queue} -> nilai max-queue rank tersebut
+#    {rank}      -> nama rank (untuk station-id otomatis)
+#
+# ================================================================
+
+forge-menu:
+
+  # -- Blok yang jadi trigger --------------------------------------
+  # Format: world;x;y;z  (bisa multiple)
+  trigger-blocks:
+    - "spawntes;-4;63;-45"
+    - "spawntes;-5;63;-45"
+
+  # -- Pesan error saat rank tidak dikenali ------------------------
+  no-rank-message: "&cKamu tidak memiliki akses ke Forge Station."
+
+  # ================================================================
+  #  PER RANK — hanya set yang beda-beda aja
+  # ================================================================
+  #  max-queue    : ditampilkan via {max_queue} di lore
+  #  title-suffix : disambung ke title template (boleh kosong "")
+  #  fill-material: material filler slot kosong
+  # ================================================================
+  ranks:
+    default:
+      max-queue: 2
+      title-suffix: ""
+      fill-material: GRAY_STAINED_GLASS_PANE
+
+    vip:
+      max-queue: 3
+      title-suffix: "&7- &bVIP"
+      fill-material: CYAN_STAINED_GLASS_PANE
+
+    mvp:
+      max-queue: 4
+      title-suffix: "&7- &3MVP"
+      fill-material: CYAN_STAINED_GLASS_PANE
+
+    elite:
+      max-queue: 5
+      title-suffix: "&7- &6ELITE"
+      fill-material: ORANGE_STAINED_GLASS_PANE
+
+    legend:
+      max-queue: 6
+      title-suffix: "&7- &4LEGEND"
+      fill-material: RED_STAINED_GLASS_PANE
+
+    premium:
+      max-queue: 7
+      title-suffix: "&7- &5PREMIUM"
+      fill-material: PURPLE_STAINED_GLASS_PANE
+
+  # ================================================================
+  #  TEMPLATE GUI — sama untuk semua rank
+  # ================================================================
+  #  rows         : jumlah baris inventory (1-6)
+  #  title        : judul inventory, title-suffix rank ditambah di belakang
+  #  fill-empty   : isi slot kosong dengan filler (true/false)
+  #
+  #  items:
+  #    slot        : nomor slot (0-based)
+  #    material    : material Bukkit
+  #    name        : nama item
+  #    lore        : lore, {max_queue} diganti otomatis
+  #    station-id  : ID station MMOItems, {rank} diganti nama rank
+  #    close-on-open: tutup GUI sebelum buka station (default true)
+  # ================================================================
+  template:
+    rows: 3
+    title: "&8Forge Station"
+    fill-empty: true
+    fill-name: " "
+
+    items:
+      - slot: 11
+        material: FURNACE
+        name: "&eMaterial Forge"
+        lore:
+          - ""
+          - "&7> Klik untuk membuka menu penempaan"
+          - "&7> khusus untuk item &aTYPE MATERIAL&7."
+          - ""
+          - "&f Pastikan kamu membawa &aMATERIAL"
+          - "&f yang dibutuhkan sebelum menempa."
+          - ""
+          - "&5* &dMax Queue: {max_queue}!"
+        station-id: "material-{rank}"
+        close-on-open: true
+
+      - slot: 15
+        material: OAK_SAPLING
+        name: "&aNature Forge"
+        lore:
+          - ""
+          - "&7> Klik untuk membuka menu penempaan"
+          - "&7> khusus untuk item &aTYPE NATURE&7."
+          - ""
+          - "&f Pastikan kamu membawa &aMATERIAL"
+          - "&f yang dibutuhkan sebelum menempa."
+          - ""
+          - "&5* &dMax Queue: {max_queue}!"
+        station-id: "nature-{rank}"
+        close-on-open: true
