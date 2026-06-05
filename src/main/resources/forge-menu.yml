@@ -23,92 +23,44 @@ forge-menu:
   # -- Pesan error saat rank tidak dikenali ------------------------
   no-rank-message: "&cKamu tidak memiliki akses ke Forge Station."
 
+  # -- Pengaturan Switch Station -----------------------------------
+  # Slot yang digunakan untuk berpindah station di dalam GUI MMOItems
+  switch-slot: 40
+
+  # Kata kunci pada nama item (Display Name) di dalam slot 40
+  # Jika nama item mengandung kata kunci berikut, target station akan dibuka
+  switch-triggers:
+    material: "MATERIAL" # Contoh: jika item bernama "Switch to Material", akan membuka material station
+    nature: "NATURE"     # Contoh: jika item bernama "Switch to Nature", akan membuka nature station
+
   # ================================================================
   #  PER RANK — hanya set yang beda-beda aja
   # ================================================================
-  #  max-queue    : ditampilkan via {max_queue} di lore
-  #  title-suffix : disambung ke title template (boleh kosong "")
-  #  fill-material: material filler slot kosong
+  #  Konfigurasi tiap rank:
+  #   material: ID station MMOItems untuk material
+  #   nature  : ID station MMOItems untuk nature
   # ================================================================
   ranks:
     default:
-      max-queue: 2
-      title-suffix: ""
-      fill-material: GRAY_STAINED_GLASS_PANE
+      material: "material-default"
+      nature: "nature-default"
 
     vip:
-      max-queue: 3
-      title-suffix: "&7- &bVIP"
-      fill-material: CYAN_STAINED_GLASS_PANE
+      material: "material-vip"
+      nature: "nature-vip"
 
     mvp:
-      max-queue: 4
-      title-suffix: "&7- &3MVP"
-      fill-material: CYAN_STAINED_GLASS_PANE
+      material: "material-mvp"
+      nature: "nature-mvp"
 
     elite:
-      max-queue: 5
-      title-suffix: "&7- &6ELITE"
-      fill-material: ORANGE_STAINED_GLASS_PANE
+      material: "material-elite"
+      nature: "nature-elite"
 
     legend:
-      max-queue: 6
-      title-suffix: "&7- &4LEGEND"
-      fill-material: RED_STAINED_GLASS_PANE
+      material: "material-legend"
+      nature: "nature-legend"
 
     premium:
-      max-queue: 7
-      title-suffix: "&7- &5PREMIUM"
-      fill-material: PURPLE_STAINED_GLASS_PANE
-
-  # ================================================================
-  #  TEMPLATE GUI — sama untuk semua rank
-  # ================================================================
-  #  rows         : jumlah baris inventory (1-6)
-  #  title        : judul inventory, title-suffix rank ditambah di belakang
-  #  fill-empty   : isi slot kosong dengan filler (true/false)
-  #
-  #  items:
-  #    slot        : nomor slot (0-based)
-  #    material    : material Bukkit
-  #    name        : nama item
-  #    lore        : lore, {max_queue} diganti otomatis
-  #    station-id  : ID station MMOItems, {rank} diganti nama rank
-  #    close-on-open: tutup GUI sebelum buka station (default true)
-  # ================================================================
-  template:
-    rows: 3
-    title: "&8Forge Station"
-    fill-empty: true
-    fill-name: " "
-
-    items:
-      - slot: 11
-        material: FURNACE
-        name: "&eMaterial Forge"
-        lore:
-          - ""
-          - "&7> Klik untuk membuka menu penempaan"
-          - "&7> khusus untuk item &aTYPE MATERIAL&7."
-          - ""
-          - "&f Pastikan kamu membawa &aMATERIAL"
-          - "&f yang dibutuhkan sebelum menempa."
-          - ""
-          - "&5* &dMax Queue: {max_queue}!"
-        station-id: "material-{rank}"
-        close-on-open: true
-
-      - slot: 15
-        material: OAK_SAPLING
-        name: "&aNature Forge"
-        lore:
-          - ""
-          - "&7> Klik untuk membuka menu penempaan"
-          - "&7> khusus untuk item &aTYPE NATURE&7."
-          - ""
-          - "&f Pastikan kamu membawa &aMATERIAL"
-          - "&f yang dibutuhkan sebelum menempa."
-          - ""
-          - "&5* &dMax Queue: {max_queue}!"
-        station-id: "nature-{rank}"
-        close-on-open: true
+      material: "material-premium"
+      nature: "nature-premium"
